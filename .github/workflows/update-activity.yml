@@ -1,0 +1,36 @@
+name: Update GitHub Activity Calendar
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+  workflow_dispatch:      # Allows manual trigger anytime
+  push:
+    paths:
+      - 'scripts/generate_activity_calendar.py'
+
+jobs:
+  update-calendar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate Activity SVG
+        run: python3 scripts/generate_activity_calendar.py
+
+      - name: Commit and Push if Changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add assets/github-activity.svg
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update github activity calendar [skip ci]"
+            git push
+          fi
